@@ -33,8 +33,9 @@ if [ ! -f dist/index.html ] || [ -n "$(find src levels index.html -newer dist/in
   npm run build >>"$LOG" 2>&1 || fail "Сборка не удалась. Подробности: $LOG"
 fi
 
-# 3. Статический сервер в фоне (только localhost), ждём до 20 секунд ответа.
-nohup npx vite preview --port "$PORT" --strictPort >>"$LOG" 2>&1 </dev/null &
+# 3. Свой сервер в фоне (только localhost): он сам завершится, когда закроют
+#    последнюю вкладку. Ждём до 20 секунд, пока ответит.
+nohup node scripts/serve-game.mjs "$PORT" >>"$LOG" 2>&1 </dev/null &
 for _ in $(seq 1 40); do
   is_up && break
   sleep 0.5
