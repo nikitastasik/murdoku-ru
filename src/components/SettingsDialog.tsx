@@ -1,8 +1,7 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { updateSettings, useSettings, type HelpMode } from '../game/settings.ts'
-
-const LANGS = ['de', 'en'] as const
+import { LANGUAGES } from '../i18n/index.ts'
 const HELP_MODES: readonly HelpMode[] = ['full', 'reduced', 'none']
 const MODE_KEY: Record<HelpMode, string> = {
   full: 'settings.helpFull',
@@ -66,7 +65,7 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
         <div className="mk-settings__row">
           <span className="mk-settings__label">{t('settings.language')}</span>
           <div className="mk-seg" role="group" aria-label={t('settings.language')}>
-            {LANGS.map((l) => (
+            {LANGUAGES.map((l) => (
               <button key={l} data-active={lang === l} onClick={() => void i18n.changeLanguage(l)}>
                 {l}
               </button>

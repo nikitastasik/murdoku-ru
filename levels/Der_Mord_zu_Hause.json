@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-mord-zu-hause",
   "title": "Willkommen daheim",
-  "titles": { "de": "Willkommen daheim", "en": "Welcome Home" },
+  "titles": { "de": "Willkommen daheim", "en": "Welcome Home", "ru": "Добро пожаловать домой" },
   "size": {
     "width": 9,
     "height": 9

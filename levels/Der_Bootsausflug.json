@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-bootsausflug",
   "title": "Über Bord",
-  "titles": { "de": "Über Bord", "en": "Overboard" },
+  "titles": { "de": "Über Bord", "en": "Overboard", "ru": "За бортом" },
   "size": {
     "width": 7,
     "height": 7

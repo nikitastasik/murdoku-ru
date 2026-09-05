@@ -2,6 +2,7 @@
   "schema": 1,
   "id": "editor-der-leere-raum",
   "title": "Der leere Raum",
+  "titles": { "de": "Der leere Raum", "ru": "Пустая комната" },
   "author": "Manuel Garand",
   "size": {
     "width": 9,

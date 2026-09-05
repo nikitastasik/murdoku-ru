@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-die-fernsehjunkies",
   "title": "Die Fernsehjunkies",
-  "titles": { "de": "Die Fernsehjunkies", "en": "The TV Junkies" },
+  "titles": { "de": "Die Fernsehjunkies", "en": "The TV Junkies", "ru": "Телеманы" },
   "size": {
     "width": 8,
     "height": 8

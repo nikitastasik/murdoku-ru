@@ -2,6 +2,12 @@ import type { Explanation, Puzzle } from '../engine/index.ts'
 
 type Dict = { [key: string]: string | Dict }
 
+/** Case forms of the object noun a locale may ask for on top of the base `object`
+ *  token: Russian declines it ("на столе" / "возле стола" / "под столом"), German and
+ *  English don't. The engine only ever passes `object`, so a template using one of
+ *  these reads the same token — the DICTIONARY carries the declined wording. */
+const OBJECT_FORMS = new Set(['objectNom', 'objectPrep', 'objectInstr', 'objectEvery', 'objectSame', 'objName'])
+
 /**
  * Renders engine `Explanation` descriptors into readable text using a locale
  * dictionary. Keeps all wording in the locale JSON — the engine stays text-free.
@@ -9,6 +15,7 @@ type Dict = { [key: string]: string | Dict }
  */
 export class Renderer {
   private readonly dict: Dict
+  private plurals?: Intl.PluralRules
 
   constructor(
     dict: unknown,
@@ -27,18 +34,32 @@ export class Renderer {
   }
 
   /**
-   * Count-aware key variant for templates that read differently in singular and
-   * plural ("1 column" vs "2 columns", "1 Raum ist" vs "2 Räume sind"). The base
-   * key holds the plural ("other") form; the locale may add a `<key>_one` sibling
-   * for the singular. Picks `_one` only when a count param (`count`/`n`/`size`)
-   * equals exactly 1 and that variant exists — otherwise the base key is used, so
-   * keys without a `_one` sibling are unaffected.
+   * The raw token a template param resolves from. Usually `params[name]`, but the
+   * declined object forms fall back to the base `object` token and `mateLc` to `mate`,
+   * so a locale can ask for a case the engine doesn't know about.
+   */
+  token(params: Record<string, string | number>, name: string): string | number {
+    const own = params[name]
+    if (own !== undefined && own !== '') return own
+    if (OBJECT_FORMS.has(name)) return params.object ?? own ?? ''
+    if (name === 'mateLc') return params.mate ?? own ?? ''
+    return own ?? ''
+  }
+
+  /**
+   * Count-aware key variant for templates that read differently per count ("1 column"
+   * vs "2 columns", "1 Raum ist" vs "2 Räume sind", ru "1 клетка"/"2 клетки"/"5 клеток").
+   * The base key holds the "other" form; the locale may add `<key>_one` (and, for
+   * languages that need them, `_few`/`_many`) siblings. The category comes from
+   * `Intl.PluralRules` for the locale's own `langTag` (absent → English, i.e. only
+   * `_one`), so keys without such a sibling are unaffected.
    */
   pluralKey(key: string, params: Record<string, string | number>): string {
     const n = params.count ?? params.n ?? params.size
-    if (n !== undefined && n !== '' && Number(n) === 1 && this.lookup(`${key}_one`) !== undefined) {
-      return `${key}_one`
-    }
+    if (n === undefined || n === '' || !Number.isFinite(Number(n))) return key
+    const rules = (this.plurals ??= new Intl.PluralRules(this.lookup('langTag') ?? 'en'))
+    const form = rules.select(Number(n))
+    if (form !== 'other' && this.lookup(`${key}_${form}`) !== undefined) return `${key}_${form}`
     return key
   }
 
@@ -70,9 +91,19 @@ export class Renderer {
       case 'name':
       case 'target':
         return this.puzzle.nameOf(String(value))
-      case 'subject':
-        if (nameSubject) return this.puzzle.nameOf(String(value))
-        return this.lookup(`pron.${this.genderOf(String(value))}`) ?? this.puzzle.nameOf(String(value))
+      case 'subject': {
+        const g = this.genderOf(String(value))
+        // Locales whose past tense agrees with the subject's gender (ru "он был" /
+        // "она была") carry the verb in the pronoun — a NAMED subject then needs the
+        // matching copula appended ("Alex был"). Locales without `copula.*` (de/en)
+        // keep the bare name.
+        if (nameSubject) {
+          const name = this.puzzle.nameOf(String(value))
+          const copula = this.lookup(`copula.${g}`)
+          return copula ? `${name} ${copula}` : name
+        }
+        return this.lookup(`pron.${g}`) ?? this.puzzle.nameOf(String(value))
+      }
       // Object pronoun of the subject ("ihm/ihr" / "him/her") — for "north of him".
       case 'subjectObj':
         return this.lookup(`pronObj.${this.genderOf(String(value))}`) ?? this.puzzle.nameOf(String(value))
@@ -86,6 +117,12 @@ export class Renderer {
           .join(' & ')
       case 'object':
         return this.lookup(`object.${value}`) ?? String(value)
+      // Declined siblings of `object.*` for locales that need them (ru: prepositional
+      // "столе" for "on/in", instrumental "столом" for "under"); they fall back to the
+      // base phrase, so locales without the sibling dictionaries are unaffected.
+      case 'objectPrep':
+      case 'objectInstr':
+        return this.lookup(`${name}.${value}`) ?? this.lookup(`object.${value}`) ?? String(value)
       // Nominative-with-article form ("ein Fernseher") for clues that compare to an
       // object ("…im selben Raum wie ein Fernseher"). Falls back to the dative form
       // (English has no case distinction, so it reuses `object.*`).
@@ -119,6 +156,10 @@ export class Renderer {
       // without per-type plurals: de "einem Baum"→"jedem Baum", "einer Pflanze"→"jeder
       // Pflanze"; en "a tree"→"every tree". Used by the universal direction-from-object clue.
       case 'objectEvery': {
+        // A locale may spell it out per type ("каждый стол" / "каждая кровать");
+        // otherwise de/en derive it from the dative/indefinite phrase.
+        const explicit = this.lookup(`objectEvery.${value}`)
+        if (explicit) return explicit
         const base = this.lookup(`object.${value}`) ?? String(value)
         return base
           .replace(/^einem /, 'jedem ')
@@ -181,7 +222,15 @@ export class Renderer {
       }
       case 'room': {
         const room = this.puzzle.board.rooms.get(String(value))
-        return room ? (this.lookup(room.nameKey) ?? room.nameKey) : String(value)
+        if (!room) return String(value)
+        // Every template says "IN the room", so locales whose room names decline carry
+        // that form (with its preposition) under `roomIn.*` — ru "Гостиная" → "в
+        // гостиной", "Кухня" → "на кухне". Without it the plain name is used.
+        return (
+          this.lookup(room.nameKey.replace(/^room\./, 'roomIn.')) ??
+          this.lookup(room.nameKey) ??
+          room.nameKey
+        )
       }
       // A "room-exists" position phrase ("auf einem Tisch" / "in einer Ecke" / …),
       // encoded "<relation>" or "<relation>:<object>". Used by the solver step texts.
@@ -191,7 +240,7 @@ export class Renderer {
         const rel = sep >= 0 ? s.slice(0, sep) : s
         const obj = sep >= 0 ? s.slice(sep + 1) : ''
         const tmpl = this.lookup(`roomPos.${rel}`) ?? rel
-        return tmpl.replace('{{object}}', this.resolveParam('object', obj))
+        return tmpl.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => this.resolveParam(key, obj))
       }
       case 'direction':
         return this.lookup(`dir.${value}`) ?? String(value)
@@ -279,7 +328,9 @@ export class Renderer {
       }
     }
     const inner = this.render(child, extra, nameSubject)
-    return (this.lookup('clue.not') ?? 'nicht ({{child}})').replace('{{child}}', inner)
+    return (this.lookup('clue.not') ?? 'nicht ({{child}})')
+      .replace(/\[\[([^\]]+?):[^\]]+?\]\]/g, '$1')
+      .replace('{{child}}', inner)
   }
 
   /** Render a suspect's own clue: gender pronouns for the subject, sentence-capitalised. */
@@ -315,7 +366,7 @@ export class Renderer {
           .replace(/\{\{child\}\}/g, childText)
           .replace(/\[\[([^\]]+?):[^\]]+?\]\]/g, '$1')
           .replace(/\{\{(\w+)\}\}/g, (_match, key: string) =>
-            this.resolveParam(key, params[key] ?? '', nameSubject, params.subject),
+            this.resolveParam(key, this.token(params, key), nameSubject, params.subject),
           )
       }
       const parts = exp.children.map((child) => this.render(child, extra, nameSubject))
@@ -331,7 +382,7 @@ export class Renderer {
       '$1',
     )
     return template.replace(/\{\{(\w+)\}\}/g, (_match, key: string) =>
-      this.resolveParam(key, params[key] ?? '', nameSubject, params.subject),
+      this.resolveParam(key, this.token(params, key), nameSubject, params.subject),
     )
   }
 }

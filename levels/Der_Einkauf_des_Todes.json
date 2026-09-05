@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-der-einkauf-des-todes",
   "title": "Der Einkauf des Todes",
-  "titles": { "de": "Der Einkauf des Todes", "en": "Shopping for Death" },
+  "titles": { "de": "Der Einkauf des Todes", "en": "Shopping for Death", "ru": "Смертельные покупки" },
   "size": {
     "width": 9,
     "height": 9

@@ -5,7 +5,7 @@ import type { Clue, Explanation, PersonId } from '../engine/index.ts'
 import InfoTip from './InfoTip.tsx'
 
 /** Params rendered bold (objects/rooms etc. — also shown on the board). */
-const BOLD_PARAMS = new Set(['object', 'objectNom', 'objectEvery', 'objects', 'room', 'attribute', 'who', 'whoNeg', 'whoOther', 'whoOtherPl', 'whoBare', 'mate', 'mateLc', 'row', 'col', 'n', 'line', 'roomRel', 'target', 'people', 'atCell'])
+const BOLD_PARAMS = new Set(['object', 'objectNom', 'objectPrep', 'objectInstr', 'objectEvery', 'objects', 'room', 'attribute', 'who', 'whoNeg', 'whoOther', 'whoOtherPl', 'whoBare', 'mate', 'mateLc', 'row', 'col', 'n', 'line', 'roomRel', 'target', 'people', 'atCell'])
 
 interface Props {
   renderer: Renderer
@@ -39,7 +39,7 @@ export default function ClueText({ renderer, clues, subjectId }: Props) {
         if (name === 'child' && childNodes) {
           out.push(...childNodes)
         } else {
-          const val = renderer.resolveParam(name, params[name] ?? '', false, params.subject)
+          const val = renderer.resolveParam(name, renderer.token(params, name), false, params.subject)
           // The negation word ("nicht"/"not") is bold + tooltipped like the concept
           // words; the trailing space stays outside the bold span so spacing is unchanged.
           if (name === 'neg') {
@@ -63,8 +63,8 @@ export default function ClueText({ renderer, clues, subjectId }: Props) {
           }
           // The "someone who had <hair>" mate phrase (roomExists / beside-same-object):
           // rebuild it so only the hair-colour word carries the colour outline.
-          else if ((name === 'mate' || name === 'mateLc') && String(params[name] ?? '').startsWith('attr:hair_')) {
-            const token = String(params[name]).slice(5) // "hair_<colour>"
+          else if ((name === 'mate' || name === 'mateLc') && String(renderer.token(params, name)).startsWith('attr:hair_')) {
+            const token = String(renderer.token(params, name)).slice(5) // "hair_<colour>"
             const pre = renderer.lookup('who.withTraitPre') ?? ''
             const post = renderer.lookup('who.withTraitPost') ?? ''
             const word = renderer.lookup(`attr.${token}`) ?? token
@@ -82,7 +82,7 @@ export default function ClueText({ renderer, clues, subjectId }: Props) {
             // The mate of a roomExists / beside-same clue is always a suspect (never the
             // victim). A named person is that specific suspect (just their name); the
             // generic / gender / trait phrasings get the "suspect" concept tooltip.
-            const tok = String(params[name] ?? '')
+            const tok = String(renderer.token(params, name))
             if (tok.startsWith('person:')) out.push(<strong key={m.index}>{val}</strong>)
             else out.push(term(m.index, val, 'suspect'))
           } else if (
@@ -94,7 +94,7 @@ export default function ClueText({ renderer, clues, subjectId }: Props) {
           ) {
             // "_susp" gender tokens are suspects (victim excluded → "suspect" tooltip);
             // plain gender tokens count everyone incl. the victim → the "all people" one.
-            const tok = String(params[name] ?? '')
+            const tok = String(renderer.token(params, name))
             out.push(term(m.index, val, tok.includes('_susp') ? 'suspect' : 'person'))
           } else if (BOLD_PARAMS.has(name)) out.push(<strong key={m.index}>{val}</strong>)
           else out.push(val)

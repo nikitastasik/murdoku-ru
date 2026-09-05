@@ -2,6 +2,7 @@
   "schema": 1,
   "id": "editor-der-gro-e-balkon",
   "title": "Der große Balkon",
+  "titles": { "de": "Der große Balkon", "ru": "Большой балкон" },
   "author": "Manuel Garand",  
   "size": {
     "width": 9,

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-volle-bettenauslastung",
   "title": "Volle Bettenauslastung",
-  "titles": { "de": "Volle Bettenauslastung", "en": "Fully Booked" },
+  "titles": { "de": "Volle Bettenauslastung", "en": "Fully Booked", "ru": "Мест нет" },
   "size": {
     "width": 8,
     "height": 8

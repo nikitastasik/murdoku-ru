@@ -1,5 +1,7 @@
 # Murdoku — Manhunt meets Sudoku
 
+> 🇷🇺 Russian fork — see **[README.ru.md](README.ru.md)** for the Russian translation and the one-click macOS launcher.
+
 > *There was a murder last night. A handful of suspects, one victim, a floor plan full of clues — and only one arrangement that truly adds up. Grab your magnifying glass.*
 
 **Murdoku** is a logic mystery for the web: the rigor of Sudoku married to the suspense of a whodunit. Every suspect leaves a clue — *"…was sitting on a chair", "…was in the same room as Bryson", "…was **not** beside a wall"*. You reason, cross out and place, until every person stands on exactly one tile. Whoever ends up **alone with the victim** in a room is the murderer.
@@ -25,7 +27,7 @@
 - **Build your own.** A full editor lets you paint a crime scene, write the clues and verify it's solvable — then play it or save it.
 - **Learn by doing.** An interactive, guided tutorial cracks a real mini-case *with* you, one step at a time.
 - **A crime scene with character.** Hand-drawn suspects and **40+ themed props**, dressed in a moody "case-file" look down to the film grain.
-- **Anywhere, in your language.** Plays beautifully on desktop and phone, in English or German, with your progress saved automatically.
+- **Anywhere, in your language.** Plays beautifully on desktop and phone, in English, German or Russian, with your progress saved automatically.
 
 ---
 
@@ -101,7 +103,7 @@ Room names follow the chosen theme — and can be swapped anytime.
 
 A gear in the corner of every screen opens the **settings case file**:
 
-- **Language** — switch between English and German at any time.
+- **Language** — switch between English, German and Russian at any time.
 - **Investigation aid** — pick your rank: **Assistant** highlights every tile the statements still allow, **Inspector** marks only the clues' references (the objects, rooms and traces named), **Master Detective** shows nothing at all — you combine entirely on your own.
 - **Stopwatch** — show or hide the elapsed-time counter in the game header.
 - **Files by gender** — tint the suspect cards (and the victim's name) softly in rose and blue, or turn it off.
@@ -125,7 +127,7 @@ Murdoku is built **engine-first**: the entire game logic is a pure, framework-fr
 | **Engine**  | Pure TypeScript (strict): model, composable `Clue` classes, a backtracking **solver** (uniqueness oracle + answer key) and a **DeductionEngine** for explainable hints |
 | **Frontend**| React 19 + Vite, board rendered on **Canvas 2D** |
 | **Generator** | Builds guaranteed-unique cases across 15 themes, in a **Web Worker** |
-| **i18n**    | i18next / react-i18next — all text from locale files (EN & DE) |
+| **i18n**    | i18next / react-i18next — all text from locale files (EN, DE & RU) |
 | **Quality** | Vitest, ESLint and strict `tsc` throughout |
 
 ---
@@ -167,7 +169,7 @@ src/
   game/          Engine <-> UI bridge: board rendering, furniture art, sessions, settings, storage
   components/    React building blocks (board, file, toolbar, settings, editor …)
   screens/       Start · Case select · Game · Generator · Tutorial · Editor
-  i18n/          English & German + the clue renderer
+  i18n/          English, German & Russian + the clue renderer
 levels/          Case files (JSON)
 screenshots/     The images above
 ```

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "editor-lecker-mord",
   "title": "Lecker Mord",
-  "titles": { "de": "Lecker Mord", "en": "Murder à la Carte" },
+  "titles": { "de": "Lecker Mord", "en": "Murder à la Carte", "ru": "Убийство а-ля карт" },
   "size": {
     "width": 6,
     "height": 6

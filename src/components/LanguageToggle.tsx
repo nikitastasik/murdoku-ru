@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next'
-
-const LANGS = ['de', 'en'] as const
+import { LANGUAGES } from '../i18n/index.ts'
 
 export default function LanguageToggle() {
   const { i18n } = useTranslation()
@@ -8,7 +7,7 @@ export default function LanguageToggle() {
 
   return (
     <div className="mk-seg" role="group" aria-label="language">
-      {LANGS.map((l) => (
+      {LANGUAGES.map((l) => (
         <button key={l} data-active={active === l} onClick={() => void i18n.changeLanguage(l)}>
           {l}
         </button>
